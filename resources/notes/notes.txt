@@ -1,0 +1,21 @@
+4/23/2026
+
+- Experimented with reading PDF files using pymupdf, library had a hard time reading tables
+  content wasn't lost, but columns were jumbled around. Could clean it, but too many variables
+  to account for.not worth it
+
+- trying confluence API instead
+
+- set up a sample page, and moved over the test files (config.md) and onboarding.md
+  using the confluence API e.g: response = requests.get(
+    f"{base_url}/wiki/rest/api/content/884737?expand=body.storage",
+    auth=HTTPBasicAuth(email, api_token)
+)
+  we are getting back the html, we will use beautiful soup to strip the html tags
+
+- Some considerations: with our old mock files, we individually made the config.md/onboarding.md
+  files, we dont want to manually make each one of these documents and link them - so how can we fetch
+  all docs at once? Confluence API supports us grabbing everything from a confluence page (ragpoc) in our case
+
+  from there we can paginate the response if we have a large subset of data (pages), and
+  process the pages individually into .md files

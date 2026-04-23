@@ -1,0 +1,62 @@
+import pickle
+import numpy as np
+import requests
+from sentence_transformers import SentenceTransformer
+
+INDEX_FILE = "index.pkl"
+MODEL_NAME = "all-MiniLM-L6-v2"
+OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = "llama3.2"
+TOP_K = 3
+
+def load_index(index_file):
+  with open(index_file, "rb") as f:
+    data = pickle.load(f)
+  return data["chunks"], data["embeddings"]
+
+def find_relevant_chunks(query, chunks, embeddings, model, top_k):
+  query_embedding = model.encode([query])
+
+  scores = np.dot(embeddings, query_embedding.T).flatten()
+
+  top_indices = np.argsort(scores)[::-1][:top_k]
+
+  return [chunks[i] for i in top_indices]
+
+def build_prompt(query, relevant_chunks):
+  context = ""
+  for chunk in relevant_chunks:
+    context += f"Source: {chunk['source']}\n{chunk['text']}\n\n"
+
+  prompt = f"""You are a helpful assistant. Answer the question using only the context below. If the answer is not in the context, say you don't know.
+
+  Context:
+  {context}
+
+  Question: {query}
+  """
+
+  return prompt
+
+def ask_ollama(prompt):
+  response = requests.post(OLLAMA_URL, json= {
+    "model": OLLAMA_MODEL,
+    "messages": [{"role": "user", "content": prompt}],
+    "stream": False
+  })
+  return response.json()["message"]["content"]
+
+if __name__ == "__main__":
+  chunks, embeddings = load_index(INDEX_FILE)
+  model = SentenceTransformer(MODEL_NAME)
+
+  query = input("Ask a question: ")
+
+  relevant_chunks = find_relevant_chunks(query, chunks, embeddings, model, TOP_K)
+  prompt = build_prompt(query, relevant_chunks)
+  answer = ask_ollama(prompt)
+
+  print("\nAnswer:", answer)
+  print("\nSources:")
+  for chunk in relevant_chunks:
+    print(f" - {chunk['source']}")
