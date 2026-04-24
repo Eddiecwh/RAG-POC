@@ -9,6 +9,9 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "llama3.2"
 TOP_K = 3
 
+CONFLUENCE_BASE_URL = "https://eddiecwh.atlassian.net"
+CONFLUENCE_SPACE_KEY = "ragpoc"
+
 def load_index(index_file):
   with open(index_file, "rb") as f:
     data = pickle.load(f)
@@ -55,8 +58,9 @@ if __name__ == "__main__":
   relevant_chunks = find_relevant_chunks(query, chunks, embeddings, model, TOP_K)
   prompt = build_prompt(query, relevant_chunks)
   answer = ask_ollama(prompt)
-
+  
   print("\nAnswer:", answer)
   print("\nSources:")
   for chunk in relevant_chunks:
     print(f" - {chunk['source']}")
+    print(f"    - {CONFLUENCE_BASE_URL}/wiki/spaces/{CONFLUENCE_SPACE_KEY}/pages/{chunk['page_id']}")

@@ -19,3 +19,39 @@
 
   from there we can paginate the response if we have a large subset of data (pages), and
   process the pages individually into .md files
+
+- Need to think about future RAG strategies, we have regular naive rag for now, but we should
+  look to incorporate advanced RAG/Hybrid search rag and most importantly, when we get to the slack integration step
+  we need to conversational rag, must be able to keep state and remember context from previous questions
+
+- For Anurag tomorrow morning:
+  - Show current POC buildout
+  - Ask about using actual context from Relatient (confluence, slack, codebase, etc)
+  - Ask about SD requirements for tools
+  - Ask about Ollama, Llama 3.2 for current POC (runs on local GPU/CPU)
+  - Future ideas: API layer w/ Spring boot, Slack App Integration
+
+4/24/2026
+  Next Steps:
+  Step 1 — Swap index.pkl for pgvector
+    Get a real vector database in place first. Everything else gets easier once you have proper persistent storage with metadata filtering. This is also where your Spring Boot background becomes relevant — pgvector is just Postgres.
+  
+  Step 2 — Add hybrid search
+    Once you're on pgvector you can add keyword search alongside vector search almost for free — Postgres has full text search built in. This immediately improves retrieval quality before you add more data.
+  
+  Step 3 — Add more data sources
+    Now that the foundation is solid, add the codebase first — it's simpler than Slack because it's just files. Slack is the messiest source — short messages, lots of noise, threading makes chunking tricky. Save it for last.
+  
+  Step 4 — Spring Boot API layer
+    Wrap everything in an API so it's not just scripts anymore.
+  
+  Step 5 — Slack integration
+  Now you have something worth wiring up to Slack.
+
+
+
+  dependecies:
+  - ollama (llama 3.2)
+  - pgvector
+  - python
+  - OpenAPI acc (github copilot)
