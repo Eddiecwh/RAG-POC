@@ -1,10 +1,10 @@
-import pickle
 import requests
 import os
 from dotenv import load_dotenv
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
+from db import get_connection, save_to_documents
 
 load_dotenv()
 
@@ -14,7 +14,6 @@ CONFLUENCE_EMAIL = os.getenv("CONFLUENCE_EMAIL")
 CONFLUENCE_API_TOKEN = os.getenv("CONFLUENCE_API_TOKEN")
 MODEL = "all-MiniLM-L6-v2"
 
-INDEX_FILE = "index.pkl"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
 
@@ -41,7 +40,39 @@ def get_page_content(base_url, page_id, auth):
                           )
   html = response.json()["body"]["storage"]["value"]
   soup = BeautifulSoup(html, "html.parser")
-  return soup.get_text(separator="\n", strip=True)
+
+  table_text = parse_tables(soup)
+
+  for table in soup.find_all("table"):
+    table.decompose()
+
+  return table_text + "\n" + soup.get_text(separator="\n", strip=True)
+
+def parse_tables(soup) -> str:
+  result = []
+  
+  for table in soup.find_all("table"):
+    rows = table.find_all("tr")
+
+    headers = []
+    for cell in rows[0].find_all("th"):
+      headers.append(cell.get_text(strip=True))
+
+    for row in rows[1:]:
+      cells = []
+      for cell in row.find_all("td"):
+        cells.append(cell.get_text(strip=True))
+      row_dict = dict(zip(headers, cells))
+
+      pairs = []
+      
+      for key, value in row_dict.items():
+        pairs.append(f"{key}: {value}")
+    
+      row_str = " | ".join(pairs) 
+      result.append(row_str)
+
+  return "\n".join(result)
 
 def chunk_text(text, chunk_size, overlap):
   chunks = []
@@ -80,13 +111,18 @@ def ingest():
     
   texts = [c["text"] for c in all_chunks]
   embeddings = model.encode(texts, show_progress_bar=True)
-    
-  print("Saving index...")
-  with open(INDEX_FILE, "wb") as f:
-    pickle.dump({"chunks": all_chunks, "embeddings": embeddings}, f)
-    
-  print(f"Done — saved {len(all_chunks)} chunks to {INDEX_FILE}")
+
+  save_to_documents(conn, all_chunks, embeddings)
+
+  print(f"Done — saved {len(all_chunks)} chunks to rag_poc::documents")
+  
+  # - DEPRECATED - not saving to pickle file
+
+  # print("Saving index...")
+  # with open(INDEX_FILE, "wb") as f:
+  #   pickle.dump({"chunks": all_chunks, "embeddings": embeddings}, f)
 
 if __name__ == "__main__":
+    conn = get_connection()
     ingest()
 

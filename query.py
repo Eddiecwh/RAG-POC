@@ -1,7 +1,6 @@
-import pickle
-import numpy as np
 import requests
 from sentence_transformers import SentenceTransformer
+from db import get_connection, find_matching_chunks_from_db
 
 INDEX_FILE = "index.pkl"
 MODEL_NAME = "all-MiniLM-L6-v2"
@@ -12,19 +11,23 @@ TOP_K = 3
 CONFLUENCE_BASE_URL = "https://eddiecwh.atlassian.net"
 CONFLUENCE_SPACE_KEY = "ragpoc"
 
-def load_index(index_file):
-  with open(index_file, "rb") as f:
-    data = pickle.load(f)
-  return data["chunks"], data["embeddings"]
+# deprecated - now using vector DB
 
-def find_relevant_chunks(query, chunks, embeddings, model, top_k):
-  query_embedding = model.encode([query])
+# def load_index(index_file):
+#   with open(index_file, "rb") as f:
+#     data = pickle.load(f)
+#   return data["chunks"], data["embeddings"]
 
-  scores = np.dot(embeddings, query_embedding.T).flatten()
 
-  top_indices = np.argsort(scores)[::-1][:top_k]
+# def find_relevant_chunks(query, chunks, embeddings, model, top_k):
+#   query_embedding = model.encode([query])
 
-  return [chunks[i] for i in top_indices]
+#   scores = np.dot(embeddings, query_embedding.T).flatten()
+
+#   top_indices = np.argsort(scores)[::-1][:top_k]
+
+#   return [chunks[i] for i in top_indices]
+
 
 def build_prompt(query, relevant_chunks):
   context = ""
@@ -50,12 +53,13 @@ def ask_ollama(prompt):
   return response.json()["message"]["content"]
 
 if __name__ == "__main__":
-  chunks, embeddings = load_index(INDEX_FILE)
-  model = SentenceTransformer(MODEL_NAME)
+  conn = get_connection()
 
+  model = SentenceTransformer(MODEL_NAME)
+  
   query = input("Ask a question: ")
 
-  relevant_chunks = find_relevant_chunks(query, chunks, embeddings, model, TOP_K)
+  relevant_chunks = find_matching_chunks_from_db(conn, query, model, TOP_K)
   prompt = build_prompt(query, relevant_chunks)
   answer = ask_ollama(prompt)
   
