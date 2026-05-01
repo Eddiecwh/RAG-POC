@@ -13,21 +13,23 @@ def get_connection():
     password = os.getenv("DB_PASSWORD")
   )
 
-def save_to_documents(conn, all_chunks, embeddings):
+def save_to_documents(conn, all_chunks, embeddings, domain):
   cursor = conn.cursor()
 
-  cursor.execute("TRUNCATE TABLE documents")
+  cursor.execute("DELETE FROM documents where domain = %s", (domain,))
 
   # Saving to Documents table instead of pkl file
   for i, chunk in enumerate(all_chunks):
     cursor.execute("""
-                   INSERT into documents (text, source, page_id, embedding) 
-                   values (%s, %s, %s, %s)""",
-                   (chunk["text"], chunk["source"], chunk["page_id"], embeddings[i].tolist()))
+                   INSERT into documents (text, source, page_id, domain, embedding) 
+                   values (%s, %s, %s, %s, %s)""",
+                   (chunk["text"], 
+                    chunk["source"], 
+                    chunk["page_id"], 
+                    chunk["domain"], 
+                    embeddings[i].tolist()))
     
   conn.commit()
-  cursor.close()
-  conn.close()
 
 def vector_search(conn, query, model, limit) -> list:
   query_embedding = model.encode([query])[0]

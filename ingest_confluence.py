@@ -104,7 +104,8 @@ def ingest():
       all_chunks.append({
         "text": chunk,
         "source": page_title,
-        "page_id": page_id
+        "page_id": page_id,
+        "domain": "confluence"
       })
     
   print(f"Total chunks: {len(all_chunks)}")
@@ -112,9 +113,11 @@ def ingest():
   texts = [c["text"] for c in all_chunks]
   embeddings = model.encode(texts, show_progress_bar=True)
 
-  save_to_documents(conn, all_chunks, embeddings)
+  save_to_documents(conn, all_chunks, embeddings, "confluence")
 
   print(f"Done — saved {len(all_chunks)} chunks to rag_poc::documents")
+
+  conn.close()
   
   # - DEPRECATED - not saving to pickle file
 

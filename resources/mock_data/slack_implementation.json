@@ -1,0 +1,168 @@
+{
+  "channels": [
+    {
+      "name": "dev-integrations",
+      "messages": [
+        {
+          "user": "john.doe",
+          "text": "anyone know why the Athena sync is timing out for client Sunrise Medical?",
+          "ts": "1702554180.000100",
+          "thread_ts": "1702554180.000100",
+          "reply_count": 3
+        },
+        {
+          "user": "jane.smith",
+          "text": "check ehr_timeout_seconds in their config, its probably still set to 10",
+          "ts": "1702554300.000200",
+          "thread_ts": "1702554180.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "mike.johnson",
+          "text": "also check if they hit the 1000 req/min rate limit, Athena is aggressive about that",
+          "ts": "1702554360.000300",
+          "thread_ts": "1702554180.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "john.doe",
+          "text": "timeout was the issue, bumped ehr_timeout_seconds to 30 and its working now. thanks!",
+          "ts": "1702554420.000400",
+          "thread_ts": "1702554180.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "sarah.lee",
+          "text": "heads up - Epic sandbox is down for maintenance until 3pm EST today",
+          "ts": "1702558000.000100",
+          "thread_ts": "1702558000.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "mike.johnson",
+          "text": "thanks for the heads up sarah",
+          "ts": "1702558060.000200",
+          "thread_ts": "1702558060.000200",
+          "reply_count": 0
+        },
+        {
+          "user": "john.doe",
+          "text": "ECW client Westside Clinic is getting HL7 parsing errors on their ADT messages, anyone seen this before?",
+          "ts": "1702640000.000100",
+          "thread_ts": "1702640000.000100",
+          "reply_count": 2
+        },
+        {
+          "user": "sarah.lee",
+          "text": "yes - check the Mirth Connect channel logs, ECW sometimes sends non-UTF8 characters in the patient name field",
+          "ts": "1702640120.000200",
+          "thread_ts": "1702640000.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "john.doe",
+          "text": "found it, there was a special character in the last name field. added a sanitization step in the channel transform",
+          "ts": "1702640300.000300",
+          "thread_ts": "1702640000.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "mike.johnson",
+          "text": "Veradigm client Lakewood Health is getting API size limit errors on their appointment sync",
+          "ts": "1702726400.000100",
+          "thread_ts": "1702726400.000100",
+          "reply_count": 2
+        },
+        {
+          "user": "jane.smith",
+          "text": "enable chunked response handling in VeradigmClient.java - there is a flag for it in the config",
+          "ts": "1702726500.000200",
+          "thread_ts": "1702726400.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "mike.johnson",
+          "text": "got it working, the response payload was exceeding the default limit. chunked handling fixed it",
+          "ts": "1702726700.000300",
+          "thread_ts": "1702726400.000100",
+          "reply_count": 0
+        }
+      ]
+    },
+    {
+      "name": "implementation",
+      "messages": [
+        {
+          "user": "amy.chen",
+          "text": "onboarding a new Epic client next week - Northgate Hospital. anyone have the checklist handy?",
+          "ts": "1702812800.000100",
+          "thread_ts": "1702812800.000100",
+          "reply_count": 2
+        },
+        {
+          "user": "john.doe",
+          "text": "its in Confluence under the onboarding guide. make sure to run the constants sync first before triggering the appointment sync",
+          "ts": "1702812900.000200",
+          "thread_ts": "1702812800.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "amy.chen",
+          "text": "constants sync came back empty - any idea why?",
+          "ts": "1702813000.000300",
+          "thread_ts": "1702812800.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "john.doe",
+          "text": "usually an auth token issue. verify the API credentials in the secrets config for Northgate",
+          "ts": "1702813100.000400",
+          "thread_ts": "1702812800.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "amy.chen",
+          "text": "that was it! credentials were set to the sandbox values. switched to prod creds and constants sync completed successfully",
+          "ts": "1702813200.000500",
+          "thread_ts": "1702812800.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "sarah.lee",
+          "text": "reminder: do not flip appointment_sync_enabled to true in production without implementation lead sign off",
+          "ts": "1702899200.000100",
+          "thread_ts": "1702899200.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "mike.johnson",
+          "text": "noted, thanks sarah",
+          "ts": "1702899260.000200",
+          "thread_ts": "1702899260.000200",
+          "reply_count": 0
+        },
+        {
+          "user": "amy.chen",
+          "text": "provider IDs are not mapping correctly for Northgate. seeing nulls in the provider_map table",
+          "ts": "1702985600.000100",
+          "thread_ts": "1702985600.000100",
+          "reply_count": 2
+        },
+        {
+          "user": "john.doe",
+          "text": "NPI mismatch most likely. cross reference their provider roster from Epic against what we have in provider_map",
+          "ts": "1702985700.000200",
+          "thread_ts": "1702985600.000100",
+          "reply_count": 0
+        },
+        {
+          "user": "amy.chen",
+          "text": "confirmed NPI mismatch for 3 providers. fixed the mapping manually and re-ran the constants sync. all good now",
+          "ts": "1702985900.000300",
+          "thread_ts": "1702985600.000100",
+          "reply_count": 0
+        }
+      ]
+    }
+  ]
+}
