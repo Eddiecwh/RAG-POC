@@ -31,26 +31,45 @@ def save_to_documents(conn, all_chunks, embeddings, domain):
     
   conn.commit()
 
-def vector_search(conn, query, model, limit) -> list:
+def vector_search(conn, query, model, domain, limit) -> list:
   query_embedding = model.encode([query])[0]
   embedding_str = "[" + ",".join(map(str, query_embedding.tolist())) + "]"
 
   cursor = conn.cursor()
 
-  cursor.execute("""
-                 SELECT id, text, source, page_id
-                 FROM documents
-                 ORDER BY embedding <=> %s::vector
-                 LIMIT %s
-                 """, (embedding_str, limit))
+  if domain:
+    cursor.execute("""
+                  SELECT id, text, source, page_id
+                  FROM documents
+                  WHERE domain = %s
+                  ORDER BY embedding <=> %s::vector
+                  LIMIT %s
+                  """, (domain, embedding_str, limit))
+  else:
+    cursor.execute("""
+                  SELECT id, text, source, page_id
+                  FROM documents
+                  ORDER BY embedding <=> %s::vector
+                  LIMIT %s
+                  """, ( embedding_str, limit))
   
   results = cursor.fetchall()
   return [{"id": result[0], "text": result[1], "source": result[2], "page_id": result[3]} for result in results]
 
-def keyword_search(conn, query, limit) -> list:
+def keyword_search(conn, query, domain, limit) -> list:
   cursor = conn.cursor()
 
-  cursor.execute("""
+  if domain:
+    cursor.execute("""
+                  SELECT id, text, source, page_id
+                  FROM documents
+                  WHERE textsearch @@ plainto_tsquery('english', %s)
+                  AND domain = %s
+                  ORDER BY ts_rank(textsearch, plainto_tsquery('english', %s))
+                  DESC LIMIT %s
+                  """, (query, domain, query, limit))
+  else:
+    cursor.execute("""
                  SELECT id, text, source, page_id
                  FROM documents
                  WHERE textsearch @@ plainto_tsquery('english', %s)
@@ -91,8 +110,8 @@ def reciprocal_rank_fusion(vector_results, keyword_results, top_k, k=60) -> list
     result.append(chunks.get(id[0]))
   return result
 
-def find_matching_chunks_from_db(conn, query, model, top_k):
-  vs = vector_search(conn, query, model, limit=20)
-  ks = keyword_search(conn, query, limit=20)
+def find_matching_chunks_from_db(conn, query, model, top_k, domain=None):
+  vs = vector_search(conn, query, model, domain, limit=20)
+  ks = keyword_search(conn, query, domain, limit=20)
   
   return reciprocal_rank_fusion(vs, ks, top_k)
