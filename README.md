@@ -2,6 +2,9 @@
 
 A RAG (Retrieval-Augmented Generation) pipeline that ingests Confluence docs, Slack messages, and code repositories to provide contextual answers via a local LLM.
 
+I've been writing a blog to document and share my experiences and learnings throughout this process. If you're interested, feel free to check it out!
+https://eddiecwh.github.io/categories/rag-ai-chatbot/
+
 ## Prerequisites
 
 - Python 3.9+
